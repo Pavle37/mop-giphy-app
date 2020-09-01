@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">MoP Giphy App</string>
+    <string name="search">Search GIFs</string>
+    <string name="content_description_search">Searches for specific gifs</string>
 </resources>
