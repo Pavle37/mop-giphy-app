@@ -1,19 +1,23 @@
 package com.nebulis.mopgiphyapp.ui.grid
 
-import androidx.lifecycle.ViewModelProviders
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.ViewModelProvider
 import com.nebulis.mopgiphyapp.R
+import com.nebulis.mopgiphyapp.ui.base.BaseScopedFragment
+import kotlinx.android.synthetic.main.grid_fragment.*
+import kotlinx.coroutines.launch
+import org.kodein.di.DI
+import org.kodein.di.DIAware
+import org.kodein.di.android.x.di
+import org.kodein.di.instance
 
-class GridFragment : Fragment() {
+class GridFragment : BaseScopedFragment(), DIAware {
 
-    companion object {
-        fun newInstance() = GridFragment()
-    }
-
+    override val di: DI by di()
+    private val factory: GridViewModelFactory by instance()
     private lateinit var viewModel: GridViewModel
 
     override fun onCreateView(
@@ -25,8 +29,16 @@ class GridFragment : Fragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        viewModel = ViewModelProviders.of(this).get(GridViewModel::class.java)
-        // TODO: Use the ViewModel
+
+        viewModel = ViewModelProvider(this,factory).get(GridViewModel::class.java)
+
+        launch {
+            viewModel.shownGifs.await().observe(viewLifecycleOwner, {
+                tvHello.text = it.toString()
+            })
+
+        }
     }
 
 }
+
