@@ -1,10 +1,7 @@
 package com.nebulis.mopgiphyapp.data.db.dao
 
 import androidx.lifecycle.LiveData
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room.*
 import com.nebulis.mopgiphyapp.data.db.entity.GifEntity
 import com.nebulis.mopgiphyapp.data.db.entity.GifEntry
 
@@ -22,9 +19,15 @@ interface GifDao{
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertAll(vararg gifs: GifEntity)
+    fun insertAll(gifs: List<GifEntity>)
 
     /**Clear all entries**/
     @Query("DELETE FROM GifEntity")
     fun clear()
+
+    @Transaction
+    fun updateData(gifs: List<GifEntity>) {
+        clear()
+        insertAll(gifs)
+    }
 }

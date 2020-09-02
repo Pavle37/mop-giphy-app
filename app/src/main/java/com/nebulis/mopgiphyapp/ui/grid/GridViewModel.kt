@@ -7,7 +7,7 @@ import com.nebulis.mopgiphyapp.util.lazyDeferred
 class GridViewModel(repo: GifRepository) : ViewModel() {
 
     val shownGifs by lazyDeferred {
-        repo.getTrendingGifs(20,0)
+        repo.getTrendingGifsLive(20,0)
     }
 
 }
