@@ -13,7 +13,6 @@ class GifActivity : AppCompatActivity() {
         setContentView(R.layout.activity_gif)
 
         setSupportActionBar(findViewById(R.id.topAppBar))
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

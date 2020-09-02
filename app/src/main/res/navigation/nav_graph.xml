@@ -6,7 +6,7 @@
     app:startDestination="@id/gridFragment">
     <fragment
         android:id="@+id/gridFragment"
-        android:name="com.nebulis.mopgiphyapp.ui.GridFragment"
+        android:name="com.nebulis.mopgiphyapp.ui.grid.GridFragment"
         android:label="grid_fragment"
         tools:layout="@layout/grid_fragment" />
 </navigation>

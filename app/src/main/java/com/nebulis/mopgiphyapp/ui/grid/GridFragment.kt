@@ -1,4 +1,4 @@
-package com.nebulis.mopgiphyapp.ui
+package com.nebulis.mopgiphyapp.ui.grid
 
 import androidx.lifecycle.ViewModelProviders
 import android.os.Bundle
