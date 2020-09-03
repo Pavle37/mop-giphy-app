@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.nebulis.mopgiphyapp.R
 import com.nebulis.mopgiphyapp.ui.base.BaseScopedFragment
 import com.xwray.groupie.GroupAdapter
@@ -43,6 +44,7 @@ class GridFragment : BaseScopedFragment(), DIAware {
         super.onActivityCreated(savedInstanceState)
 
         viewModel = ViewModelProvider(this, factory).get(GridViewModel::class.java)
+        viewModel.refreshTrending() /*Initial trending refresh*/
 
         initializeUI()
     }
@@ -52,6 +54,7 @@ class GridFragment : BaseScopedFragment(), DIAware {
      * in the ViewModel and correspondingly updates the UI.
      */
     private fun initializeUI() = launch {
+        initializeSwipeToRefresh()
 
         val groupieAdapter = initializeRecyclerView()
 
@@ -60,6 +63,19 @@ class GridFragment : BaseScopedFragment(), DIAware {
             groupieAdapter.updateAsync(gridItems)
         })
 
+    }
+
+    /**
+     * Initializes swipe to refresh layout and sets listeners to handle refresh calls.
+     */
+    private fun initializeSwipeToRefresh() {
+        viewModel.refreshListener.observe(viewLifecycleOwner,{
+            swipeRefresh.isRefreshing = it /*Change values depending on the observed state*/
+        })
+
+        swipeRefresh.setOnRefreshListener {
+            viewModel.refreshTrending()
+        }
     }
 
     /**
@@ -76,5 +92,4 @@ class GridFragment : BaseScopedFragment(), DIAware {
 
         return groupieAdapter
     }
-
 }
