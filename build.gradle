@@ -34,4 +34,6 @@ ext{
     kodein_version = "7.0.0"
     lifecycle_version = "2.2.0"
     okhttp_version = "4.8.1"
+    glide_version = "4.11.0"
+    groupie_version = "2.8.1"
 }

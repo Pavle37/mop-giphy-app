@@ -9,6 +9,11 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private const val REFRESH_THRESHOLD = 60 * 1000 // 1m
+
+/**
+ * Implementation of GifRepository that handles Network and Database calls.
+ */
 class GifRepositoryImpl(
     private val gifDao: GifDao,
     private val giphyRestClient: GiphyRestClient
@@ -20,15 +25,31 @@ class GifRepositoryImpl(
         }
     }
 
+    /*Flag that keeps last refresh time*/
+    private var lastRefreshTime = -1L
+
+    /**
+     * Checks if parameters for refreshing are okay and if they are, initiates the request and updates
+     * the databse with results.
+     */
+    override suspend fun refreshTrendingGifs() {
+        val requestedRefreshTime = System.currentTimeMillis()
+        if((requestedRefreshTime - lastRefreshTime) < REFRESH_THRESHOLD) return //Don't refresh
+
+        lastRefreshTime = requestedRefreshTime
+
+        initiateRefreshRequest()
+    }
+
     /**
      * Tries to get fresh gifs from server. If successful clears out old ones and inserts new.
      */
-    override suspend fun refreshTrendingGifs() {
+    private suspend fun initiateRefreshRequest() {
         try {
-            val trending = giphyRestClient.service.getTrendingGifs()
+            val trending = giphyRestClient.getTrendingGifs()
 
             /*On success, clear old ones and insert new*/
-            gifDao.updateData(trending.gifList)
+            gifDao.updateData(trending)
 
         }catch (e: Exception){
             /*Cannot refresh, ignore*/

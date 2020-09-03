@@ -11,7 +11,7 @@ data class GifEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id") /*because field is transient*/
     @Transient /*Ignore by Gson*/
-    val id: Int,
+    var id: Int,
     @SerializedName("images")
     @Embedded(prefix = "gif_")
     val gifImages: GifImages,
