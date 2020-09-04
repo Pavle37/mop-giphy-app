@@ -13,7 +13,12 @@ interface GifRepository {
     val trendingGifs: LiveData<List<GifEntry>>
 
     /**
-     * Returns defined amount of trending gifs starting at offset position.
+     * Searched gifs observable data.
+     */
+    val searchedGifs: LiveData<List<GifEntry>>
+
+    /**
+     * Updates the trending gifs starting at offset and going until the limit.
      *
      * @param limit - max number of returned entries.
      * @param offset - starting position of the first entry.
@@ -21,6 +26,19 @@ interface GifRepository {
     suspend fun updateTrendingGifs(
         limit: Int = LIMIT_ITEMS,
         offset: Int = STARTING_OFFSET_POSITION,
+    )
+
+    /**
+     * Updates the searched gifs starting at offset and going until the limit.
+     *
+     * @param limit - max number of returned entries.
+     * @param offset - starting position of the first entry.
+     *  @param query - string we want to search our gifs against.
+     **/
+    suspend fun updateSearchedGifs(
+        limit: Int = LIMIT_ITEMS,
+        offset: Int = STARTING_OFFSET_POSITION,
+        query: String
     )
 
 }

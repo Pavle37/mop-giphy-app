@@ -24,69 +24,108 @@ class GridViewModel(private val repo: GifRepository) : ViewModel() {
 
     /*Private mutable implementation*/
     private val _shownGifs = MutableLiveData<List<GifEntry>>()
+
     /*Offset observable*/
     private val offset = MutableLiveData(STARTING_OFFSET_POSITION)
 
+    private var gifContext = ShownGifs.TRENDING
+
     init {
         /*Attach observer and handle changes in trending gifs data*/
-        repo.trendingGifs.observeForever {trending ->
-            Log.d("TrendingGifs","gifs loaded: ${trending.size}")
+        repo.trendingGifs.observeForever { trending ->
             /*Number of items that should be showing currently*/
             val shownItems = offset.value!! + LIMIT_ITEMS
-            if(shownItems > trending.size) return@observeForever //Cannot load more
+            if (shownItems > trending.size) return@observeForever //Cannot load more
             /*Post UI changes for the given subset of values*/
-            _shownGifs.value = trending.subList(0,shownItems)
+            _shownGifs.value = trending.subList(0, shownItems)
+        }
+
+        repo.searchedGifs.observeForever {searched ->
+            /*Number of items that should be showing currently*/
+            val shownItems = offset.value!! + LIMIT_ITEMS
+            if (shownItems > searched.size) return@observeForever //Cannot load more
+            /*Post UI changes for the given subset of values*/
+            _shownGifs.value = searched.subList(0, shownItems)
         }
     }
 
     /**
      * Starts to observe offset changes. First run initiates refresh()
      */
-    fun startOffsetObserving(){
+    fun startOffsetObserving() {
         lastRefreshTime = System.currentTimeMillis()
 
-        offset.observeForever{
-            GlobalScope.launch(Dispatchers.Main){
-                Log.d("TrendingGifs","offset changed: $it")
-                repo.updateTrendingGifs(LIMIT_ITEMS, it)
+        offset.observeForever {
+            GlobalScope.launch(Dispatchers.Main) {
+                if(gifContext == ShownGifs.TRENDING) {
+                    repo.updateTrendingGifs(LIMIT_ITEMS, it)
+                }else{
+                    repo.updateSearchedGifs(LIMIT_ITEMS, it,searchedQuery)
+                }
                 refreshListener.value = false
             }
         }
     }
 
-        /**
-         * Observable element that indicates the state of refreshing.
-         */
-        val refreshListener = MutableLiveData(false) /*Refresh true indicating "getTrendingGifsLive*/
+    /**
+     * Observable element that indicates the state of refreshing.
+     */
+    val refreshListener = MutableLiveData(false) /*Refresh true indicating "getTrendingGifsLive*/
 
-        /*Flag that keeps last refresh time*/
-        private var lastRefreshTime = -1L
+    /*Flag that keeps last refresh time*/
+    private var lastRefreshTime = -1L
 
-        /**
-         * Checks if parameters for refreshing are okay and if they are, initiates the request and updates
-         * the database with results.
-         */
-        fun refreshTrending() {
-            Log.d("TrendingGifs","refresh called")
-            val requestedRefreshTime = System.currentTimeMillis()
-            if ((requestedRefreshTime - lastRefreshTime) < REFRESH_THRESHOLD){
-                refreshListener.value = false
-                return
-            } //Don't refresh
+    /**
+     * Checks if parameters for refreshing are okay and if they are, initiates the request and updates
+     * the database with results.
+     */
+    fun refreshTrending() {
+        Log.d("TrendingGifs", "refresh called")
+        val requestedRefreshTime = System.currentTimeMillis()
+        if ((requestedRefreshTime - lastRefreshTime) < REFRESH_THRESHOLD) {
+            refreshListener.value = false
+            return
+        } //Don't refresh
 
-            lastRefreshTime = requestedRefreshTime
+        lastRefreshTime = requestedRefreshTime
 
-            offset.value = STARTING_OFFSET_POSITION
-        }
+        offset.value = STARTING_OFFSET_POSITION
+    }
 
-        /**
-         * Loads more items from the API with given offset.
-         *
-         * @param offset - from which item position should we start the load.
-         */
-        fun loadMore(offset: Int) {
-            Log.d("TrendingGifs","load more called")
-            this.offset.value = offset
-        }
+    /**
+     * Loads more items from the API with given offset.
+     *
+     * @param offset - from which item position should we start the load.
+     */
+    fun loadMore(offset: Int) {
+        this.offset.value = offset
+    }
 
+
+    private var searchedQuery = ""
+
+    /**
+     * Contacts the repository to update the search gifs. Changes context so showGifs will display
+     * searched items.
+     *
+     * @param query - text we want to search the gifs with.
+     */
+    fun performSearch(query: String) {
+        gifContext = ShownGifs.SEARCHED
+        searchedQuery = query
+        offset.value = STARTING_OFFSET_POSITION
+    }
+
+    /**
+     * Clears searches and refreshes trending gifs.
+     */
+    fun clearSearch() {
+        gifContext = ShownGifs.TRENDING
+        refreshTrending()
+    }
+
+}
+
+private enum class ShownGifs{
+    TRENDING, SEARCHED
 }

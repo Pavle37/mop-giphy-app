@@ -30,7 +30,7 @@ class GridFragment : BaseScopedFragment(), DIAware {
 
     override val di: DI by di()
     private val factory: GridViewModelFactory by instance() /*Inject the factory*/
-    private lateinit var viewModel: GridViewModel
+    internal lateinit var viewModel: GridViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater,

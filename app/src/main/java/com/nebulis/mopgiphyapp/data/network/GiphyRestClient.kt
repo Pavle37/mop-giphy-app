@@ -79,4 +79,19 @@ class GiphyRestClient(private val service: GiphyApiService) {
                 }
             }
     }
+
+    /**
+     * Gets gifs from Api service and indexes the returned elements.
+     *
+     * @param limit - max number of fetched gifs.
+     * @param offset - starting index offset.
+     * @param query - which gifs we want to see.
+     */
+    suspend fun getSearchGifs(limit : Int = LIMIT_ITEMS, offset: Int = STARTING_OFFSET_POSITION, query: String): List<GifEntity> {
+        return service.getSearchGifs(limit,offset,query = query).gifList.apply {
+            for(i in 0 until size){
+                this[i].id = offset+i+1
+            }
+        }
+    }
 }

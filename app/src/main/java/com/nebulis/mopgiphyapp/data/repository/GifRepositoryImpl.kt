@@ -3,7 +3,9 @@ package com.nebulis.mopgiphyapp.data.repository
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.nebulis.mopgiphyapp.data.db.dao.GifDao
+import com.nebulis.mopgiphyapp.data.db.entity.GifEntity
 import com.nebulis.mopgiphyapp.data.db.entity.GifEntry
+import com.nebulis.mopgiphyapp.data.db.entity.toGifEntry
 import com.nebulis.mopgiphyapp.data.network.GiphyRestClient
 import com.nebulis.mopgiphyapp.ui.grid.STARTING_OFFSET_POSITION
 import com.nebulis.mopgiphyapp.util.forceRefresh
@@ -20,16 +22,21 @@ class GifRepositoryImpl(
 ) : GifRepository {
 
     override val trendingGifs: LiveData<List<GifEntry>>
-        get() = _treningGifs
+        get() = _trendingGifs
 
-    private val _treningGifs = MutableLiveData<List<GifEntry>>()
+    private val _trendingGifs = MutableLiveData<List<GifEntry>>()
+
+    override val searchedGifs: LiveData<List<GifEntry>>
+        get() = _searchedGifs
+
+    private val _searchedGifs = MutableLiveData<List<GifEntry>>()
 
     init {
         /**
          * Fetch gifs and observe database changes. Commit observations to trending live data.
          */
         gifDao.getGifsLive().observeForever {
-            _treningGifs.value = it
+            _trendingGifs.value = it
         }
     }
 
@@ -52,7 +59,36 @@ class GifRepositoryImpl(
             e.printStackTrace()
             /*Force refresh to indicate to observers that data change was not possible and to
             * update UI with the current data.*/
-            _treningGifs.forceRefresh()
+            _trendingGifs.forceRefresh()
+        }
+    }
+
+    /**
+     * Downloads searched gifs from backend. On success, commits to search results.
+     *
+     *  @param limit - max amount of entries to return.
+     *  @param offset - starting index of the returned entry.
+     *  @param query - string we want to search our gifs against.
+     */
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun updateSearchedGifs(limit: Int, offset: Int, query: String) {
+        try {
+            val searched = giphyRestClient.getSearchGifs(limit, offset,query).toGifEntry()
+
+            /*On success, clear old ones and insert new*/
+            if (offset == STARTING_OFFSET_POSITION) _searchedGifs.postValue(searched)
+            /*On success, just insert*/
+            else {
+                val combined = mutableListOf<GifEntry>()
+                combined.addAll(_searchedGifs.value!!)
+                combined.addAll(searched)
+                _searchedGifs.postValue(combined as List<GifEntry>)
+            }
+        }catch (e: Exception) {
+            e.printStackTrace()
+            /*Force refresh to indicate to observers that data change was not possible and to
+            * update UI with the current data.*/
+            _searchedGifs.forceRefresh()
         }
     }
 }
