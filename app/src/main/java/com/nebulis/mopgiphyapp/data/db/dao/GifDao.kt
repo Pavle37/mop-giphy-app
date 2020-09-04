@@ -15,8 +15,10 @@ interface GifDao{
      * @param offset - starting position of the first entry.
      **/
     @Query("SELECT * FROM GifEntity where id between :offset and :limit")
-    fun getGifs(limit: Int, offset: Int): LiveData<List<GifEntry>>
+    fun getGifs(limit: Int, offset: Int): List<GifEntry>
 
+    @Query("SELECT * FROM GifEntity")
+    fun getGifsLive(): LiveData<List<GifEntry>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertAll(gifs: List<GifEntity>)

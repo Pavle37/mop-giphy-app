@@ -5,12 +5,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.nebulis.mopgiphyapp.R
 import com.nebulis.mopgiphyapp.ui.base.BaseScopedFragment
+import com.nebulis.mopgiphyapp.ui.grid.items.LoadingItem
+import com.nebulis.mopgiphyapp.ui.grid.items.toGridItems
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.kotlinandroidextensions.GroupieViewHolder
 import kotlinx.android.synthetic.main.grid_fragment.*
@@ -44,7 +44,6 @@ class GridFragment : BaseScopedFragment(), DIAware {
         super.onActivityCreated(savedInstanceState)
 
         viewModel = ViewModelProvider(this, factory).get(GridViewModel::class.java)
-        viewModel.refreshTrending() /*Initial trending refresh*/
 
         initializeUI()
     }
@@ -53,14 +52,17 @@ class GridFragment : BaseScopedFragment(), DIAware {
      * Launches a coroutine on the main thread and initializes UI elements. Listens for updates
      * in the ViewModel and correspondingly updates the UI.
      */
+    @Suppress("UNCHECKED_CAST")
     private fun initializeUI() = launch {
         initializeSwipeToRefresh()
 
         val groupieAdapter = initializeRecyclerView()
 
-        viewModel.shownGifs.await().observe(viewLifecycleOwner, {
+        viewModel.startOffsetObserving()
+        viewModel.shownGifs.observe(viewLifecycleOwner, {
             val gridItems = it.toGridItems()
-            groupieAdapter.updateAsync(gridItems)
+            groupieAdapter.update(gridItems)
+            isLoading = false
         })
 
     }
@@ -69,14 +71,22 @@ class GridFragment : BaseScopedFragment(), DIAware {
      * Initializes swipe to refresh layout and sets listeners to handle refresh calls.
      */
     private fun initializeSwipeToRefresh() {
-        viewModel.refreshListener.observe(viewLifecycleOwner,{
+        viewModel.refreshListener.observe(viewLifecycleOwner, {
             swipeRefresh.isRefreshing = it /*Change values depending on the observed state*/
         })
 
         swipeRefresh.setOnRefreshListener {
-            viewModel.refreshTrending()
+            launch {
+                viewModel.refreshTrending()
+            }
         }
     }
+
+    /**
+     * Indicates if load more has been initiated. Pauses the scroll while true.
+     */
+    private var isLoading = false
+
 
     /**
      * Initializes adapter, layout manager and binds everything to recyclerview.
@@ -85,11 +95,42 @@ class GridFragment : BaseScopedFragment(), DIAware {
         val groupieAdapter = GroupAdapter<GroupieViewHolder>()
         val gridLm = StaggeredGridLayoutManager(NUMBER_OF_COLUMNS, RecyclerView.VERTICAL)
 
+        /*Listen to scroll events and handle them*/
+        val scrollListener = object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                handleScroll(gridLm,groupieAdapter)
+                return
+            }
+        }
+
+        /*Wire everything up*/
         rvGrid.apply {
             layoutManager = gridLm
             adapter = groupieAdapter
+            addOnScrollListener(scrollListener)
         }
 
         return groupieAdapter
+    }
+
+    /**
+     * Looks for the last visible element and if it matches loading, initiates load more request.
+     *
+     * @param gridLm - layout manager used to get visible item positions.
+     * @param groupieAdapter - adapter used to handle fetching of the items.
+     */
+    private fun handleScroll(gridLm: StaggeredGridLayoutManager,groupieAdapter: GroupAdapter<GroupieViewHolder>) {
+        if (isLoading) return
+        val positions = IntArray(NUMBER_OF_COLUMNS)
+        val visiblePositions = gridLm.findLastCompletelyVisibleItemPositions(positions)
+        val groupCount = groupieAdapter.groupCount
+        val visibleItem1 = groupieAdapter.getItem(visiblePositions[0])
+        val visibleItem2 = groupieAdapter.getItem(visiblePositions[1])
+
+        if (visibleItem1 is LoadingItem || visibleItem2 is LoadingItem) {
+            isLoading = true
+            viewModel.loadMore(groupCount - 1)
+        }
     }
 }

@@ -6,8 +6,8 @@ import retrofit2.http.Query
 interface GiphyApiService {
 
     @GET("gifs/trending")
-    suspend fun getTrendingGifs(@Query("limit") limit: Int = 20,
-                                @Query("offset") offset:Int = 0,
+    suspend fun getTrendingGifs(@Query("limit") limit: Int,
+                                @Query("offset") offset:Int,
                                 @Query("rating") rating: String = "g"): GiphyResponse
 
 

@@ -1,62 +1,92 @@
 package com.nebulis.mopgiphyapp.ui.grid
 
+import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.nebulis.mopgiphyapp.data.db.entity.GifEntry
 import com.nebulis.mopgiphyapp.data.repository.GifRepository
-import com.nebulis.mopgiphyapp.util.lazyDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import java.lang.Exception
 
 private const val REFRESH_THRESHOLD = 60 * 1000 // 1m
-
+const val LIMIT_ITEMS = 20
+const val STARTING_OFFSET_POSITION = 0
 
 class GridViewModel(private val repo: GifRepository) : ViewModel() {
 
-    val shownGifs by lazyDeferred {
-        repo.getTrendingGifsLive(20, 0)
+    /**
+     * List of current gifs to be displayed in the grid.
+     */
+    val shownGifs: LiveData<List<GifEntry>>
+        get() = _shownGifs
+
+    /*Private mutable implementation*/
+    private val _shownGifs = MutableLiveData<List<GifEntry>>()
+    /*Offset observable*/
+    private val offset = MutableLiveData(STARTING_OFFSET_POSITION)
+
+    init {
+        /*Attach observer and handle changes in trending gifs data*/
+        repo.trendingGifs.observeForever {trending ->
+            Log.d("TrendingGifs","gifs loaded: ${trending.size}")
+            /*Number of items that should be showing currently*/
+            val shownItems = offset.value!! + LIMIT_ITEMS
+            if(shownItems > trending.size) return@observeForever //Cannot load more
+            /*Post UI changes for the given subset of values*/
+            _shownGifs.value = trending.subList(0,shownItems)
+        }
     }
 
     /**
-     * Observable element that indicates the state of refreshing.
+     * Starts to observe offset changes. First run initiates refresh()
      */
-    val refreshListener = MutableLiveData(true) /*Refresh true indicating "getTrendingGifsLive*/
+    fun startOffsetObserving(){
+        lastRefreshTime = System.currentTimeMillis()
 
-    /*Flag that keeps last refresh time*/
-    private var lastRefreshTime = -1L
-
-    /**
-     * Checks if parameters for refreshing are okay and if they are, initiates the request and updates
-     * the database with results.
-     */
-    fun refreshTrending() {
-        val requestedRefreshTime = System.currentTimeMillis()
-        if ((requestedRefreshTime - lastRefreshTime) < REFRESH_THRESHOLD){
-            refreshListener.value = false
-            return
-        } //Don't refresh
-
-        lastRefreshTime = requestedRefreshTime
-        refreshListener.value = true
-
-        initiateRefreshRequest()
-    }
-
-    /**
-     * Refreshes trending gifs and updates shownGifs data.
-     */
-    private fun initiateRefreshRequest() = GlobalScope.launch(Dispatchers.IO) {/*ViewModel is lifecycle element, so GlobalScope is alright*/
-        try {
-            repo.refreshTrendingGifs()
-        } catch (e: Exception) {
-            /*Cannot refresh, ignore*/
-            e.printStackTrace()
-        }finally {
-            GlobalScope.launch(Dispatchers.Main) {/*Set value must not be invoked on a BG thread*/
+        offset.observeForever{
+            GlobalScope.launch(Dispatchers.Main){
+                Log.d("TrendingGifs","offset changed: $it")
+                repo.updateTrendingGifs(LIMIT_ITEMS, it)
                 refreshListener.value = false
             }
         }
     }
+
+        /**
+         * Observable element that indicates the state of refreshing.
+         */
+        val refreshListener = MutableLiveData(false) /*Refresh true indicating "getTrendingGifsLive*/
+
+        /*Flag that keeps last refresh time*/
+        private var lastRefreshTime = -1L
+
+        /**
+         * Checks if parameters for refreshing are okay and if they are, initiates the request and updates
+         * the database with results.
+         */
+        fun refreshTrending() {
+            Log.d("TrendingGifs","refresh called")
+            val requestedRefreshTime = System.currentTimeMillis()
+            if ((requestedRefreshTime - lastRefreshTime) < REFRESH_THRESHOLD){
+                refreshListener.value = false
+                return
+            } //Don't refresh
+
+            lastRefreshTime = requestedRefreshTime
+
+            offset.value = STARTING_OFFSET_POSITION
+        }
+
+        /**
+         * Loads more items from the API with given offset.
+         *
+         * @param offset - from which item position should we start the load.
+         */
+        fun loadMore(offset: Int) {
+            Log.d("TrendingGifs","load more called")
+            this.offset.value = offset
+        }
 
 }

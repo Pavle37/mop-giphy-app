@@ -1,6 +1,8 @@
 package com.nebulis.mopgiphyapp.data.network
 
 import com.nebulis.mopgiphyapp.data.db.entity.GifEntity
+import com.nebulis.mopgiphyapp.ui.grid.LIMIT_ITEMS
+import com.nebulis.mopgiphyapp.ui.grid.STARTING_OFFSET_POSITION
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -70,7 +72,7 @@ class GiphyRestClient(private val service: GiphyApiService) {
      * @param limit - max number of fetched gifs.
      * @param offset - starting index offset.
      */
-    suspend fun getTrendingGifs(limit: Int = 20, offset: Int = 0): List<GifEntity> {
+    suspend fun getTrendingGifs(limit : Int = LIMIT_ITEMS, offset: Int = STARTING_OFFSET_POSITION): List<GifEntity> {
          return service.getTrendingGifs(limit,offset).gifList.apply {
                 for(i in 0 until size){
                     this[i].id = offset+i+1
