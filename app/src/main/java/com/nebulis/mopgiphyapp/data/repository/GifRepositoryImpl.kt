@@ -3,10 +3,9 @@ package com.nebulis.mopgiphyapp.data.repository
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.nebulis.mopgiphyapp.data.db.dao.GifDao
-import com.nebulis.mopgiphyapp.data.db.entity.GifEntity
 import com.nebulis.mopgiphyapp.data.db.entity.GifEntry
 import com.nebulis.mopgiphyapp.data.db.entity.toGifEntry
-import com.nebulis.mopgiphyapp.data.network.GiphyRestClient
+import com.nebulis.mopgiphyapp.data.network.client.GiphyApiRestClient
 import com.nebulis.mopgiphyapp.ui.grid.STARTING_OFFSET_POSITION
 import com.nebulis.mopgiphyapp.util.forceRefresh
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +17,7 @@ import kotlinx.coroutines.withContext
  */
 class GifRepositoryImpl(
     private val gifDao: GifDao,
-    private val giphyRestClient: GiphyRestClient
+    private val giphyApiRestClient: GiphyApiRestClient
 ) : GifRepository {
 
     override val trendingGifs: LiveData<List<GifEntry>>
@@ -49,7 +48,7 @@ class GifRepositoryImpl(
      */
     override suspend fun updateTrendingGifs(limit: Int, offset: Int) = withContext(Dispatchers.IO){
         try {
-            val trending = giphyRestClient.getTrendingGifs(limit, offset)
+            val trending = giphyApiRestClient.getTrendingGifs(limit, offset)
 
             /*On success, clear old ones and insert new*/
             if (offset == STARTING_OFFSET_POSITION) gifDao.updateData(trending)
@@ -73,7 +72,7 @@ class GifRepositoryImpl(
     @Suppress("UNCHECKED_CAST")
     override suspend fun updateSearchedGifs(limit: Int, offset: Int, query: String) {
         try {
-            val searched = giphyRestClient.getSearchGifs(limit, offset,query).toGifEntry()
+            val searched = giphyApiRestClient.getSearchGifs(limit, offset,query).toGifEntry()
 
             /*On success, clear old ones and insert new*/
             if (offset == STARTING_OFFSET_POSITION) _searchedGifs.postValue(searched)

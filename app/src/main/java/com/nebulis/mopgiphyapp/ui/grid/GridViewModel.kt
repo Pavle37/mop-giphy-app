@@ -1,6 +1,5 @@
 package com.nebulis.mopgiphyapp.ui.grid
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -33,20 +32,25 @@ class GridViewModel(private val repo: GifRepository) : ViewModel() {
     init {
         /*Attach observer and handle changes in trending gifs data*/
         repo.trendingGifs.observeForever { trending ->
-            /*Number of items that should be showing currently*/
-            val shownItems = offset.value!! + LIMIT_ITEMS
-            if (shownItems > trending.size) return@observeForever //Cannot load more
-            /*Post UI changes for the given subset of values*/
-            _shownGifs.value = trending.subList(0, shownItems)
+           showLoadedGifs(trending)
         }
 
         repo.searchedGifs.observeForever {searched ->
-            /*Number of items that should be showing currently*/
-            val shownItems = offset.value!! + LIMIT_ITEMS
-            if (shownItems > searched.size) return@observeForever //Cannot load more
-            /*Post UI changes for the given subset of values*/
-            _shownGifs.value = searched.subList(0, shownItems)
+            showLoadedGifs(searched)
         }
+    }
+
+    /**
+     * Displays newly loaded gifs by adding them to the shown gifs list.
+     *
+     * @param loadedGifs - newly loaded gifs.
+     */
+    private fun showLoadedGifs(loadedGifs: List<GifEntry>) {
+        /*Number of items that should be showing currently*/
+        val shownItems = offset.value!! + LIMIT_ITEMS
+        if (shownItems > loadedGifs.size) return //Cannot load more
+        /*Post UI changes for the given subset of values*/
+        _shownGifs.value = loadedGifs.subList(0, shownItems)
     }
 
     /**
@@ -80,7 +84,6 @@ class GridViewModel(private val repo: GifRepository) : ViewModel() {
      * the database with results.
      */
     fun refreshTrending() {
-        Log.d("TrendingGifs", "refresh called")
         val requestedRefreshTime = System.currentTimeMillis()
         if ((requestedRefreshTime - lastRefreshTime) < REFRESH_THRESHOLD) {
             refreshListener.value = false

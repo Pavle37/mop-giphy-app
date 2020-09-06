@@ -15,6 +15,11 @@ data class GifEntry(
     }
 
     companion object {
+        /**
+         * Converts entity object into an entry object.
+         *
+         * @param entity - entity we want to convert.
+         */
         fun parse(entity: GifEntity): GifEntry {
             with(entity) {
                 return GifEntry(title, gifImages.gifPreview.url, gifImages.gifLarge.url)

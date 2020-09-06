@@ -13,7 +13,7 @@ import kotlinx.android.synthetic.main.gif_grid_item.view.*
 /**
  * Class that binds our grid item layout with GifEntry.
  */
-class GridItem(private val gif: GifEntry): Item<GroupieViewHolder>(){
+class GridItem(val gif: GifEntry): Item<GroupieViewHolder>(){
 
     override fun bind(viewHolder: GroupieViewHolder, position: Int) {
         val ivPicture = viewHolder.root.ivPicture

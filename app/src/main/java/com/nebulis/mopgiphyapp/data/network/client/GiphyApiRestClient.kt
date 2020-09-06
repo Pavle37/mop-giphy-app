@@ -1,6 +1,7 @@
-package com.nebulis.mopgiphyapp.data.network
+package com.nebulis.mopgiphyapp.data.network.client
 
 import com.nebulis.mopgiphyapp.data.db.entity.GifEntity
+import com.nebulis.mopgiphyapp.data.network.service.GiphyApiService
 import com.nebulis.mopgiphyapp.ui.grid.LIMIT_ITEMS
 import com.nebulis.mopgiphyapp.ui.grid.STARTING_OFFSET_POSITION
 import okhttp3.Interceptor
@@ -12,17 +13,17 @@ import retrofit2.converter.gson.GsonConverterFactory
 private const val BASE_URL = "api.giphy.com/v1/"
 private const val PROTOCOL = "https://"
 
-private const val API_KEY = "cBBqDDZS66OwzOo3bNu076sD8t0sZuRy"
+const val API_KEY = "cBBqDDZS66OwzOo3bNu076sD8t0sZuRy"
 
 /**
  * Class that instantiates GiphyApiService with retrofit and encapsulates request fetching logic.
  */
-class GiphyRestClient(private val service: GiphyApiService) {
+class GiphyApiRestClient(private val service: GiphyApiService) {
 
     companion object {
 
         /*Thread safe instance of singleton*/
-        @Volatile var instance: GiphyRestClient? = null
+        @Volatile var instance: GiphyApiRestClient? = null
             private set
 
         private val lock = Any() /*Generic object to keep the lock*/
@@ -34,7 +35,7 @@ class GiphyRestClient(private val service: GiphyApiService) {
         /**
          * Creates GiphyApiService and attaches to the instance of this rest client.
          */
-        private fun createService(): GiphyRestClient {
+        private fun createService(): GiphyApiRestClient {
             /*
             * Intercepts any call to Giphy API and adds api_key query parameter to the request chain.
             */
@@ -61,7 +62,7 @@ class GiphyRestClient(private val service: GiphyApiService) {
 
             val service = retrofit.create(GiphyApiService::class.java)
 
-            return GiphyRestClient(service)
+            return GiphyApiRestClient(service)
         }
     }
 

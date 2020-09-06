@@ -2,4 +2,9 @@
     <string name="app_name">MoP Giphy App</string>
     <string name="search">Search GIFs</string>
     <string name="content_description_search">Searches for specific gifs</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="uploading">Uploading...</string>
+    <string name="file_too_big">Selected file too big for upload</string>
+    <string name="failed_to_upload">Failed to upload</string>
 </resources>

@@ -8,5 +8,35 @@
         android:id="@+id/gridFragment"
         android:name="com.nebulis.mopgiphyapp.ui.grid.GridFragment"
         android:label="grid_fragment"
-        tools:layout="@layout/grid_fragment" />
+        tools:layout="@layout/grid_fragment" >
+        <action
+            android:id="@+id/action_gridFragment_to_gifFullscreenFragment"
+            app:destination="@id/gifFullscreenFragment" >
+        </action>
+        <action
+            android:id="@+id/action_gridFragment_to_fullscreenFragment"
+            app:destination="@id/fullscreenFragment" >
+
+        </action>
+    </fragment>
+    <fragment
+        android:id="@+id/gifFullscreenFragment"
+        android:name="com.nebulis.mopgiphyapp.ui.GifFullscreenFragment"
+        tools:layout="@layout/gif_fullscreen"
+        android:label="GifFullscreenFragment" >
+        <argument
+            android:name="gifUrl"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
+    <fragment
+        android:id="@+id/fullscreenFragment"
+        android:name="com.nebulis.mopgiphyapp.ui.FullscreenFragment"
+        android:label="fragment_fullscreen"
+        tools:layout="@layout/fragment_fullscreen" >
+        <argument
+            android:name="gifUrl"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
 </navigation>

@@ -8,10 +8,15 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.nebulis.mopgiphyapp.R
+import com.nebulis.mopgiphyapp.data.db.entity.GifEntry
+import com.nebulis.mopgiphyapp.ui.GifActivity
 import com.nebulis.mopgiphyapp.ui.base.BaseScopedFragment
+import com.nebulis.mopgiphyapp.ui.grid.items.GridItem
 import com.nebulis.mopgiphyapp.ui.grid.items.LoadingItem
 import com.nebulis.mopgiphyapp.ui.grid.items.toGridItems
 import com.xwray.groupie.GroupAdapter
+import com.xwray.groupie.Item
+import com.xwray.groupie.OnItemClickListener
 import com.xwray.groupie.kotlinandroidextensions.GroupieViewHolder
 import kotlinx.android.synthetic.main.grid_fragment.*
 import kotlinx.coroutines.launch
@@ -64,6 +69,12 @@ class GridFragment : BaseScopedFragment(), DIAware {
             groupieAdapter.update(gridItems)
             isLoading = false
         })
+
+        groupieAdapter.setOnItemClickListener { item, _ ->
+            if(item is GridItem) {
+                (activity as GifActivity).openGifFullscreen(item.gif.largeGifUrl)
+            }
+        }
 
     }
 
